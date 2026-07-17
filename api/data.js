@@ -5,7 +5,7 @@ const BLOBS = {
   ai2603: '019f6fac-80a6-7e7d-b9ed-4fbbd6b268b4',
 };
 
-function jsonblobFetch(blobId, method, body) {
+function fetchBlob(blobId, method, body) {
   return new Promise((resolve, reject) => {
     const u = new URL(`https://jsonblob.com/api/jsonBlob/${blobId}`);
     const opts = { hostname: u.hostname, path: u.pathname, method, headers: { 'Content-Type': 'application/json' } };
@@ -21,9 +21,9 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
   if (req.method === 'OPTIONS') return res.status(204).end();
 
+  // Parse: query.class=ai2607&add=1
   const classId = req.query.class;
   const isAdd = req.query.add === '1';
   const blobId = BLOBS[classId];
@@ -31,19 +31,19 @@ module.exports = async (req, res) => {
 
   try {
     if (req.method === 'GET') {
-      const r = await jsonblobFetch(blobId, 'GET');
-      res.status(200).send(r.data);
+      const r = await fetchBlob(blobId, 'GET');
+      res.status(200).setHeader('Content-Type', 'application/json; charset=utf-8').send(r.data);
     } else if (req.method === 'POST' && !isAdd) {
-      await jsonblobFetch(blobId, 'PUT', req.body);
+      const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      await fetchBlob(blobId, 'PUT', body);
       res.status(200).json({ ok: true });
     } else if (req.method === 'POST' && isAdd) {
-      const existing = await jsonblobFetch(blobId, 'GET');
-      const data = JSON.parse(existing.data);
-      data.push(typeof req.body === 'string' ? JSON.parse(req.body) : req.body);
-      await jsonblobFetch(blobId, 'PUT', JSON.stringify(data));
-      res.status(200).json({ ok: true });
-    } else {
-      res.status(405).json({ error: 'Method not allowed' });
+      const r = await fetchBlob(blobId, 'GET');
+      const data = JSON.parse(r.data);
+      const record = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      data.push(record);
+      await fetchBlob(blobId, 'PUT', JSON.stringify(data));
+      res.status(200).json({ ok: true, id: record.id });
     }
   } catch (e) {
     res.status(502).json({ error: e.message });
