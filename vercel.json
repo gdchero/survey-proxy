@@ -1,6 +1,7 @@
 {
-  "rewrites": [
-    { "source": "/api/data/:class/data/add", "destination": "/api/data?class=:class&add=1" },
-    { "source": "/api/data/:class/data", "destination": "/api/data?class=:class" }
-  ]
+  "functions": {
+    "api/data.js": {
+      "runtime": "nodejs22.x"
+    }
+  }
 }
