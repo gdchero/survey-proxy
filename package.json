@@ -1,1 +1,1 @@
-{"name":"survey-proxy","scripts":{"start":"node server.js"}}
+{ "name": "survey-proxy", "version": "1.0.0" }
